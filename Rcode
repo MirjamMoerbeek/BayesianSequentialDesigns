@@ -14,8 +14,7 @@ f.SeqBayesCRT=function(n2.min,BFtarget,fraction)
   ### create vectors to store output for a maximum of 50,000, 200, 100 and 50 clusters per arm
   BF.Inf.out=BF.200.out=BF.100.out=BF.50.out=rep(NA,nr.trials) # vectors with BF values
   n2.Inf.out=n2.200.out=n2.100.out=n2.50.out=rep(NA,nr.trials) # vectors with number of clusters per arm
-  
-  
+    
   for(ii in 1:nr.trials)
   {
     print(ii)
@@ -41,8 +40,6 @@ f.SeqBayesCRT=function(n2.min,BFtarget,fraction)
 
     resp.c.pop=var.u.c.pop+var.e.c.pop         # response vector for control
     resp.i.pop=delta+var.u.i.pop+var.e.i.pop   # response vector for intervention
-    
-    
     
     ### make certain to enter the while loop by using BF=1 (even though this may not be the true value)
     n2=n2.min-1
@@ -130,5 +127,4 @@ f.SeqBayesCRT=function(n2.min,BFtarget,fraction)
               n2.50.out=n2.50.out
               )
   return(output)
-
 }
