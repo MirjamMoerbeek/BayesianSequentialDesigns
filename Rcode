@@ -1,0 +1,134 @@
+library(actuar)   # to sample cluster sizes from zero-truncated negative binomial distribution 
+library(nlme)	# to fit a mixed model
+library(bain)	# to calculate the Bayes factor
+
+var.e=10          # variance individual level
+var.u=1.11        # variance cluster level
+delta=1           # effect size (unstandardized)
+
+f.SeqBayesCRT=function(n2.min,BFtarget,fraction)
+  {
+ 
+  nr.trials=5000  ### number of replications
+  
+  ### create vectors to store output for a maximum of 50,000, 200, 100 and 50 clusters per arm
+  BF.Inf.out=BF.200.out=BF.100.out=BF.50.out=rep(NA,nr.trials) # vectors with BF values
+  n2.Inf.out=n2.200.out=n2.100.out=n2.50.out=rep(NA,nr.trials) # vectors with number of clusters per arm
+  
+  
+  for(ii in 1:nr.trials)
+  {
+    print(ii)
+
+    ####### generate population with 50,000 clusters in both conditions
+    n1.c.pop=rztnbinom(n=50000,size=94,prob=0.96)  # sample cluster sizes in control (with mean=4 and var=3.8)
+    n1.i.pop=rztnbinom(n=50000,size=94,prob=0.96)  # sample cluster sizes in intervention (with mean=4 and var=3.8)
+
+    ID.c.pop=rep(seq(1:50000),n1.c.pop)            # cluster identifier for control
+    ID.i.pop=50000+rep(seq(1:50000),n1.i.pop)      # cluster identifier for intervention
+
+    treat.c.pop=rep(0,length=length(ID.c.pop))     # treatment condition = 0 in control
+    treat.i.pop=rep(1,length=length(ID.i.pop))     # treatment condition = 1 in intervention
+
+    var.u.c.pop=rnorm(n=50000,mean=0,sd=sqrt(1.11))    
+    var.u.c.pop=rep(var.u.c.pop,n1.c.pop)                     # random effects at cluster level in control
+
+    var.u.i.pop=rnorm(n=50000,mean=0,sd=sqrt(1.11))
+    var.u.i.pop=rep(var.u.i.pop,n1.i.pop)                     # random effects at cluster level in intervention
+
+    var.e.c.pop=rnorm(n=length(ID.c.pop),mean=0,sd=sqrt(10))  # random effects at subject level in control
+    var.e.i.pop=rnorm(n=length(ID.i.pop),mean=0,sd=sqrt(10))  # random effects at subject level in intervention
+
+    resp.c.pop=var.u.c.pop+var.e.c.pop         # response vector for control
+    resp.i.pop=delta+var.u.i.pop+var.e.i.pop   # response vector for intervention
+    
+    
+    
+    ### make certain to enter the while loop by using BF=1 (even though this may not be the true value)
+    n2=n2.min-1
+    BF=1
+    
+    ### increase sample size if needed
+    while(BF<BFtarget & BF>1/BFtarget & n2<50000 )
+      {
+
+      ######## increase n2 by 1 and sample n2 clusters per treatment condition from population
+      n2=n2+1                               # number of clusters per condition
+      ID.c=ID.c.pop[ID.c.pop<=n2]
+      ID.i=ID.i.pop[ID.i.pop<=(50000+n2)]
+      ID=c(ID.c,ID.i)                     # both identifiers in one vector
+
+      treat.c=treat.c.pop[ID.c.pop<=n2]
+      treat.i=treat.i.pop[ID.i.pop<=(50000+n2)]
+      treat=c(treat.c,treat.i)            # vector with treatment condition
+
+      resp.c=resp.c.pop[ID.c.pop<=n2]
+      resp.i=resp.i.pop[ID.i.pop<=(50000+n2)]
+      resp=c(resp.c,resp.i)               # vector with responses
+
+      data.CRT=cbind(resp,ID,treat)
+      data.CRT=as.data.frame(data.CRT)    # data frame
+
+      results.lme=lme(resp ~ as.factor(treat)-1,random=~1|ID, data = data.CRT)   # fit model to data
+      summary(results.lme)                                                       # print results
+
+      ### get required input for bain
+      estimates=results.lme$coefficients$fixed # means in both treatment conditions
+      names(estimates)=c("Cont","Int")         # give names to these means
+      ngroup=table(data.CRT$treat)             # create a vector containing the sample sizes of each treatment conditions  
+  
+      cov.c=as.matrix(summary(results.lme)$varFix[1,1]) # covariance matrix for control
+      cov.i=as.matrix(summary(results.lme)$varFix[2,2]) # covariance matrix for intervention
+      covariances=list(cov.c,cov.i)                     # collect these covariance matrices in a list
+
+      # set a seed value
+      #set.seed(12345)
+
+      # test hypotheses with the function bain from the package bain
+      # Note that there are multiple groups characterized by one mean, therefore group_parameters=1. 
+      # Note that are no joint parameters, therefore, joint_parameters=0.
+      results <- bain(estimates,hypotheses <-"Cont=Int",n=ngroup,Sigma=covariances,group_parameters=1,joint_parameters = 0, fraction = fraction)
+      BF=results$fit[1,11]    # BF of H0 (delta=0) versus complement (delta!=0)
+      
+      if(n2<=50)
+        {
+          BF.50.out[ii]=BF
+          n2.50.out[ii]=n2
+        }
+      
+      if(n2<=100)
+        {
+          BF.100.out[ii]=BF
+          n2.100.out[ii]=n2
+        }
+      
+      if(n2<=200)
+        {
+          BF.200.out[ii]=BF
+          n2.200.out[ii]=n2
+        }
+      
+      if(n2<=50000)
+        {
+          BF.Inf.out[ii]=BF
+          n2.Inf.out[ii]=n2
+        }
+    }
+  }
+
+  output=list(nr.trials=nr.trials,
+              n2.min=n2.min,
+              BFtarget=BFtarget,
+              fraction=fraction,
+              BF.Inf.out=BF.Inf.out,
+              BF.200.out=BF.200.out,
+              BF.100.out=BF.100.out,
+              BF.50.out=BF.50.out,
+              n2.Inf.out=n2.Inf.out,
+              n2.200.out=n2.200.out,
+              n2.100.out=n2.100.out,
+              n2.50.out=n2.50.out
+              )
+  return(output)
+
+}
