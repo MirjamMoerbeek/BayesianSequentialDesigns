@@ -1,5 +1,4 @@
-##### results
-results=results12131
+##### mean number of clusters per groiup, and percentages correct, incorrect and indecsions 
 paste("hypothesis set: ",results$hypset)
 paste("delta: ",results$delta)
 paste("n2.min:",results$n2.min)
@@ -26,24 +25,10 @@ percinconclusive=100*(1-length(BF[BF>BFtarget])/5000-length(BF[BF<1/BFtarget])/5
 percinconclusive=round(percinconclusive,2)
 paste("Percentage data sets for which neither hypothesis is favoured: ", percinconclusive)
 
-
-
-
-
-
-#### stacked histograms 
-
-dev.new(width=16/2.54, height=16/2.54)
-par(mar = c(5,5,4,2)+0.1)
-
-
-
-##### results
-results=results12131
+##### results: histograms for number of clusters per group and for Bayes factor
 n2=results$n2.30.out
 BF=1/results$BF.30.out      # take inverse of BF. As such BF>BFtarget implies the correct hypothesis is favored
 BFtarget=results$BFtarget
-
 
 if(results$delta == 0)
   {
@@ -52,7 +37,6 @@ if(results$delta == 0)
   Decision[BF>BFtarget]=1
   Decision[BF<1/BFtarget]=3
 }
-
 
 if(results$delta > 0)
 {
@@ -90,23 +74,3 @@ g + geom_histogram(aes(fill=Decision),
   theme(legend.position = c(0.85, 0.85)) +   
   geom_vline(xintercept =c(log10(1/BFtarget), log10(BFtarget)),color="black", lwd=0.75, lty=2) +
   theme(text = element_text(size = 20))  
-
-
-
-
-
-
-### code hieronder werkt nog niet
-
-g <- ggplot(dat, aes(n2)) + scale_fill_brewer(palette = "Spectral")
-g + geom_histogram(aes(fill=Decision), 
-                   bins = 20, 
-                   col="black", 
-                   size=.1) + theme_bw() +
-  scale_x_continuous(name="Number of clusters per condition", limits=c(0,110))+
-  scale_y_continuous(name="Number of generated data sets", limits=c(0,2250))+
-  scale_fill_manual(values=c("Incorrect"="red", "None"="orange", "Correct"="green"),drop=FALSE) + theme(legend.position = c(0.5, 0.85))+
-  theme(text = element_text(size = 20))  
-
-
-
