@@ -70,7 +70,7 @@ f.SeqBayesCRT=function(hypset,delta,n2.min,BFtarget,fraction)
       var.e.est=as.data.frame(VarCorr(results.lmer))[2,4]                           # variance of residual
       var.u.est=as.data.frame(VarCorr(results.lmer))[1,4]                            # variance of random intercept
       ICC=var.u.est/(var.u.est+var.e.est)                                                    # ICC
-      DE=1+n1*ICC                                                                # design effect
+      DE=1+(n1-1)*ICC                                                                # design effect
       
       ### get required input for bain
       estimates=fixef(results.lmer)                                              # means in both treatment conditions
