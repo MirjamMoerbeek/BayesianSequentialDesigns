@@ -5,11 +5,11 @@ paste("n2.min:",results$n2.min)
 paste("BFtarget:",results$BFtarget)
 paste("fraction:",results$fraction)
 
-n2=results$n2.30.out
-BF=1/results$BF.30.out      # take inverse of BF. As such Bf is H1 versus H0 for null hypothesis testing and H2 versus H1 for informative hypothesis testing
+n2=results$n2.30.out                              # user selects specifies maximum number of clusters per group
+BF=results$BF.30.out                              # user selects specifies maximum number of clusters per group
+if (results$delta>0) BF=1/results$BF.200.out      # take inverse of BF so that BF>1 favors the hypothesis that generated the data
 BFtarget=results$BFtarget
 n2.max=max(n2)
-maxheight=2500
 
 round(mean(n2))
 
