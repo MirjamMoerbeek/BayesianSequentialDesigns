@@ -13,6 +13,8 @@ f.SeqBayesCRT=function(hypset,delta,n2.min,BFtarget,fraction)
   BF.Inf.out=BF.200.out=BF.100.out=BF.50.out=BF.30.out=rep(NA,nr.trials)         # vectors with BF values
   n2.Inf.out=n2.200.out=n2.100.out=n2.50.out=n2.30.out=rep(NA,nr.trials)         # vectors with number of clusters per arm
 
+  set.seed(12345)                                                                # seed for random number generation
+
   start=date()
   
   for(ii in 1:nr.trials)
